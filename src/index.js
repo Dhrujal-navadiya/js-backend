@@ -1,8 +1,9 @@
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
+// dotenv.config();
+
 import connectDB from "./db/connnection.js";
 import app from "./app.js";
 
-dotenv.config();
 const connectionPort = process.env.PORT;
 
 if (!connectionPort) {
