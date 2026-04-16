@@ -26,3 +26,5 @@ const uploadOnCloudinary = async (localFilePatch) => {
     return null;
   }
 };
+
+export { uploadOnCloudinary };
