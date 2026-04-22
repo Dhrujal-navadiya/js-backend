@@ -1,3 +1,6 @@
+import { User } from "../models/user.modal.js";
+import { ApiError } from "./ApiError.js";
+
 export const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -15,5 +18,6 @@ export const generateAccessAndRefreshToken = async (userId) => {
 
 export const cookiesOptions = {
   httpOnly: true,
-  secure: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
 };

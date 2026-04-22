@@ -149,6 +149,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
+
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
@@ -159,22 +160,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
     const decodedToken = await jwt.verify(
       incomingRefreshToken,
-      process.env.REFRESH_TOKEN_SCRECT
+      process.env.REFRESH_TOKEN_SECRET
     );
 
-    const user = await User.findById(decodedToken?._id).select(
-      "-password -refreshToken"
-    );
+    const user = await User.findById(decodedToken?._id);
 
     if (!user) {
       throw new ApiError(401, "user not found");
     }
 
+
     if (user.refreshToken !== incomingRefreshToken) {
       throw new ApiError(401, "Refresh token is used or expired");
     }
 
-    const { accessToken, newRefreshToken } =
+    const { accessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshToken(user._id);
 
     return res
