@@ -1,5 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 
+// channel was also one user
+// who subscribe the channel that was also user
+
 const subscriptionSchema = new Schema(
   {
     subscriber: {
