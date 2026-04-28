@@ -9,6 +9,7 @@ import {
   generateAccessAndRefreshToken,
   cookiesOptions as options,
 } from "../utils/utils.js";
+import { transport } from "../utils/mailtrap.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -82,6 +83,13 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!createdUser) {
     throw new ApiError(500, "Error creating user");
   }
+
+  await transport.sendMail({
+    from: '"My App" <no-reply@myapp.com>',
+    to: createdUser.email,
+    subject: "Welcome 🎉",
+    html: `<h2>Hello ${createdUser.fullName}, welcome to our app!</h2>`,
+  });
 
   return res
     .status(201)
