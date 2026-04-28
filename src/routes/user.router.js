@@ -11,6 +11,8 @@ import {
   updateAccountDetails,
   getUserChannelProfile,
   getWatchHistory,
+  verifyOtp,
+  resendOtp,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -24,6 +26,8 @@ router.route("/register").post(
   ]),
   registerUser
 );
+router.route("/verify-otp").post(verifyOtp);
+router.route("/resend-otp").post(resendOtp);
 router.route("/login").post(loginUser);
 
 router.route("/logout").post(verifyJWT, logOutUser);

@@ -10,6 +10,7 @@ import {
   cookiesOptions as options,
 } from "../utils/utils.js";
 import { transport } from "../utils/mailtrap.js";
+import { generateOtp } from "../utils/otp.util.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -67,6 +68,8 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar is required");
   }
 
+  const { otpNumber, otpExpiry } = generateOtp();
+
   const user = await User.create({
     email,
     password,
@@ -74,6 +77,9 @@ const registerUser = asyncHandler(async (req, res) => {
     username: username.toLowerCase(),
     avatar: avatar.url,
     coverImage: coverImage?.url || "",
+    otp: otpNumber,
+    otpExpiry,
+    isVerified: false,
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -86,14 +92,77 @@ const registerUser = asyncHandler(async (req, res) => {
 
   await transport.sendMail({
     from: '"My App" <no-reply@myapp.com>',
-    to: createdUser.email,
-    subject: "Welcome 🎉",
-    html: `<h2>Hello ${createdUser.fullName}, welcome to our app!</h2>`,
+    to: user.email,
+    subject: "Verify your account",
+    html: `<h2>Your OTP is: ${otpNumber}</h2><p>Expires in 2 minutes</p>`,
   });
 
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User created successfully"));
+});
+
+const verifyOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    throw new ApiError(400, "Email and OTP are required");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.isVerified) {
+    throw new ApiError(400, "User already verified");
+  }
+
+  if (user.otp !== otp) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  if (user.otpExpiry < new Date()) {
+    throw new ApiError(400, "OTP expired");
+  }
+
+  user.isVerified = true;
+  user.otp = undefined;
+  user.otpExpiry = undefined;
+
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Account verified successfully"));
+});
+
+const resendOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const { otpNumber, otpExpiry } = generateOtp();
+
+  user.otp = otpNumber;
+  user.otpExpiry = otpExpiry;
+
+  await user.save();
+
+  await transport.sendMail({
+    to: user.email,
+    subject: "Resend OTP",
+    html: `<h2>Your OTP is: ${otpNumber}</h2><p>Expires in 2 minutes</p>`,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "OTP resent successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -461,4 +530,6 @@ export {
   updateUserCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  verifyOtp,
+  resendOtp,
 };

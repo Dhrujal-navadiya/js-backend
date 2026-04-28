@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { User } from "../models/user.modal.js";
 import { ApiError } from "./ApiError.js";
 
@@ -20,4 +21,20 @@ export const cookiesOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+};
+
+export const generateOtp = (length = 6) => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  let otpNumber = "";
+  const randomBytes = crypto.randomBytes(length);
+
+  for (let i = 0; i < length; i++) {
+    otpNumber += chars[randomBytes[i] % chars.length];
+  }
+
+  const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 min
+
+  return { otpNumber, otpExpiry };
 };
