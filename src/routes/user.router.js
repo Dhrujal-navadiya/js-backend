@@ -34,4 +34,6 @@ router
   .route("/update-cover-image")
   .post(upload.single("coverImage"), verifyJWT, updateUserCoverImage);
 
+// router.route("")
+
 export default router;
