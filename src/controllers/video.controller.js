@@ -98,4 +98,24 @@ const getAllVideos = asyncHandler(async (req, res) => {
   );
 });
 
-export { videoCreate };
+const getVideoById = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  const video = await Video.findById(videoId).populate(
+    "owner",
+    "username fullName avatar"
+  );
+
+  video.views += 1;
+  await video.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video fetched successfully"));
+});
+
+export { videoCreate, getAllVideos, getVideoById };
