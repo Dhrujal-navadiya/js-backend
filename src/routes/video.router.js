@@ -18,7 +18,7 @@ router.route("/create").post(
   videoCreate
 );
 
-router.route("/").get(verifyJWT, getAllVideos);
-router.route("/:videoId").get(verifyJWT, getSingleVideo);
+router.route("/").get(getAllVideos);
+router.route("/:videoId").get(getSingleVideo);
 
 export default router;
