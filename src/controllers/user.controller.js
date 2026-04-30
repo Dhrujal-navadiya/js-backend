@@ -10,7 +10,7 @@ import {
   cookiesOptions as options,
 } from "../utils/utils.js";
 import { transport } from "../utils/mailtrap.js";
-import { generateOtp } from "../utils/otp.util.js";
+import { generateOtp } from "../utils/utils.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
