@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import { Video } from "../models/video.modal.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
@@ -118,4 +120,92 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video fetched successfully"));
 });
 
-export { videoCreate, getAllVideos, getVideoById };
+const updateVideoDetails = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description, duration } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "You are not allowed to update this video");
+  }
+
+  if (title !== undefined) {
+    if (!title.trim()) {
+      throw new ApiError(400, "title is required");
+    }
+    video.title = title;
+  }
+
+  if (description !== undefined) {
+    if (!description.trim()) {
+      throw new ApiError(400, "description is required");
+    }
+    video.description = description;
+  }
+
+  if (duration !== undefined) {
+    if (!duration.trim()) {
+      throw new ApiError(400, "duration is required");
+    }
+    video.duration = duration;
+  }
+
+  const thumbnailLocalPath = req.file?.path;
+
+  if (thumbnailLocalPath) {
+    const thumbnailUpload = await uploadOnCloudinary(thumbnailLocalPath);
+
+    if (!thumbnailUpload?.url) {
+      throw new ApiError(500, "Error uploading thumbnail");
+    }
+
+    video.thumbnail = thumbnailUpload.url;
+  }
+
+  await video.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video updated successfully"));
+});
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "You are not allowed to delete this video");
+  }
+
+  await Video.findByIdAndDelete(videoId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted successfully"));
+});
+
+export {
+  videoCreate,
+  getAllVideos,
+  getVideoById,
+  updateVideoDetails,
+  deleteVideo,
+};
